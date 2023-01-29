@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>ESP32 Freezer Temp Chart</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <h1>Temperature Reporter!</h1>
+  <div>
+    <canvas id="myChart"></canvas>
+  </div>
+  <script>
+    //https://www.createwithdata.com/chartjs-and-csv/
+    d3.csv("http://192.168.0.47/gettempdata").then(makeChart);
+    function makeChart(data) {
+      console.log(data);
+      var temperature = data.map(function (d) {
+        return d.temp;
+      });
+      var time_date = data.map(function (d) {
+        return d.tm_dt;
+      });
+
+      const ctx = document.getElementById('myChart');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: time_date,
+          datasets: [{
+            label: 'Temperatures',
+            data: temperature,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
