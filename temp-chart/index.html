@@ -14,7 +14,7 @@
   </div>
   <script>
     //https://www.createwithdata.com/chartjs-and-csv/
-    d3.csv("http://192.168.0.47/gettempdata").then(makeChart);
+    d3.csv("/gettempdata").then(makeChart);
     function makeChart(data) {
       console.log(data);
       var temperature = data.map(function (d) {
