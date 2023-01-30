@@ -136,6 +136,17 @@ float temperatureGet(){
   }
   return t;
 }
+String currTime(){
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+    return "Failed";
+  }
+  char *currtm = asctime(&timeinfo);
+  if (currtm[strlen(currtm)-1] == '\n') currtm[strlen(currtm)-1] = '\0';
+  return currtm;
+}
 void appendCSVTemp(fs::FS &fs, const char * path, const float temperature){
   Serial.printf("Writing file: %s\n", path);
 
@@ -144,19 +155,9 @@ void appendCSVTemp(fs::FS &fs, const char * path, const float temperature){
     Serial.println("Failed to open file for writing");
     return;
   }
-  
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  
-  struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
-    Serial.println("Failed to obtain time");
-    return;
-  }
-  char *currtm = asctime(&timeinfo);
-  if (currtm[strlen(currtm)-1] == '\n') currtm[strlen(currtm)-1] = '\0';
 
   String buf;
-  buf += F(currtm);
+  buf += (currTime());
   buf += F(",");
   buf += String(temperature, 6);
   buf += F("\n");
@@ -201,7 +202,16 @@ String readFile(fs::FS &fs, const char * path){
   file.close();
   return textToSend;
 }
+void renameFile(fs::FS &fs, const char * path1, const char * path2){
+  Serial.printf("Renaming file %s to %s\n", path1, path2);
+  if (fs.rename(path1, path2)) {
+    Serial.println("File renamed");
+  } else {
+    Serial.println("Rename failed");
+  }
+}
 void setup() {
+  writeFile(SD, "/temp_date.csv", "temp,tm_dt\n");
   Serial.begin(115200);
   initWifi();
   initSDCard();
@@ -232,6 +242,12 @@ void loop() {
   csvOverWriteFlag -= 30000;
   if (csvOverWriteFlag == 0){
     csvOverWriteFlag = 172800000;
+    String file_name;
+    file_name += "/temp_date";
+    file_name += F("+");
+    file_name += currTime();
+    file_name += F(".csv");
+    renameFile(SD, "/temp_date.csv", file_name.c_str());
     writeFile(SD, "/temp_date.csv", "temp,tm_dt\n");
   };
   appendCSVTemp(SD, "/temp_date.csv", temp);
